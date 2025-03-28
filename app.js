@@ -5,8 +5,11 @@ import { SuiTradingClient } from "@tradeport/sui-trading-sdk";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { decodeSuiPrivateKey } from "@mysten/sui.js/cryptography";
+const private_key = process.env.PRIVATE_KEY
+const api_user = process.env.x_api_user
+const api_key = process.env.x_api_key
 
-const privateKeyBase64 = process.env.PRIVATE_KEY; // Example: "3x/W+..."
+const privateKeyBase64 = private_key; // Example: "3x/W+..."
 const keypair = Ed25519Keypair.fromSecretKey(
   decodeSuiPrivateKey(privateKeyBase64).secretKey
 );
@@ -14,8 +17,8 @@ let address = keypair.getPublicKey().toSuiAddress();
 const client = new SuiClient({ url: getFullnodeUrl("mainnet") });
 
 const suiTradingClient = new SuiTradingClient({
-  apiKey: process.env.xx_api_key,
-  apiUser: process.env.x_api_user,
+  apiKey: api_key,
+  apiUser: api_user,
 });
 
 const GRAPHQL_ENDPOINT = "https://api.indexer.xyz/graphql"; // Replace with the actual GraphQL endpoint
@@ -172,8 +175,8 @@ async function fetchListings() {
       method: "post",
       data: { query, variables },
       headers: {
-        apiKey: process.env.xx_api_key,
-        apiUser: process.env.x_api_user,
+        apiKey: api_key,
+        apiUser: api_user,
       },
     });
     return res.data.data.sui.listings;

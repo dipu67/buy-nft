@@ -5,11 +5,13 @@ import { SuiTradingClient } from "@tradeport/sui-trading-sdk";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { decodeSuiPrivateKey } from "@mysten/sui.js/cryptography";
+
 const private_key = process.env.PRIVATE_KEY
 const api_user = process.env.x_api_user
 const api_key = process.env.x_api_key
 
-const privateKeyBase64 = private_key; // Example: "3x/W+..."
+
+const privateKeyBase64 =private_key; // Example: "3x/W+..."
 const keypair = Ed25519Keypair.fromSecretKey(
   decodeSuiPrivateKey(privateKeyBase64).secretKey
 );
@@ -85,7 +87,7 @@ query fetchCollectionListedItems(
 `;
 
 const variables = {
-  limit: 10,
+  limit: 5,
   where: {
     collection_id: {
       _eq: "9f1fcbb5-82a6-4d50-866f-96a9fc724eb7",
@@ -148,7 +150,12 @@ const variables = {
               _eq: "rarity",
             },
             value: {
-              _in: ["2", "3", "4"],
+              _in: [
+                "2",
+                "3",
+                "4"
+
+              ],
             },
           },
         },
@@ -175,8 +182,8 @@ async function fetchListings() {
       method: "post",
       data: { query, variables },
       headers: {
-        apiKey: api_key,
-        apiUser: api_user,
+        "x-api-key": api_key,
+        "x-api-user": api_user,
       },
     });
     return res.data.data.sui.listings;
@@ -198,18 +205,19 @@ async function processListings() {
     // Check the price threshold before attempting to buy
     if (nft.price <= 5000000000) {
       try {
-        // console.log(`Fetching buy transaction for NFT ID: ${nft.id}...`);
+        // console.log(`Fetching buy transaction for NFT ID: ${nft.id}...`);      
         // Fetch the buy transaction from Tradeport SDK
         const transaction = await suiTradingClient.buyListings({
           listingIds: [nft.id],
           walletAddress: address,
+          
         });
         // console.log(`Signing and executing transaction for NFT ID: ${nft.id}...`);
         // Sign and execute the transaction
         const result = await client.signAndExecuteTransaction({
           transaction: transaction,
           signer: keypair,
-          requestType: "WaitForLocalExecution",
+          requestType: 'WaitForLocalExecution',
           options: {
             showEffects: true,
           },
@@ -226,5 +234,5 @@ async function processListings() {
 }
 
 // Optionally, run the processListings function at set intervals
-processListings();
-setInterval(processListings, 5000);
+processListings()
+setInterval(processListings, 3000);

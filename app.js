@@ -174,8 +174,7 @@ const variables = {
   ],
 };
 
-// Function to fetch the listings data
-async function fetchListings() {
+async function processListings() {
   try {
     const res = await axios({
       url: "https://api.indexer.xyz/graphql",
@@ -186,50 +185,38 @@ async function fetchListings() {
         "x-api-user": api_user,
       },
     });
-    return res.data.data.sui.listings;
-  } catch (error) {
-    console.error("Error fetching listings:", error.message);
-    return [];
-  }
-}
 
-// Function to process each listing: preview data, modify if needed, and submit a transaction
-async function processListings() {
-  const listings = await fetchListings();
-  // console.log("Fetched listings:", listings);
+    const listings = res.data.data.sui.listings;
+    // Filter for NFTs meeting the price criteria
+    const validListings = listings.filter((nft) => nft.price < 5100000000);
 
-  for (const nft of listings) {
-    // Preview each NFT item in the console
-    // console.log(`NFT ID: ${nft.id}, Price: ${nft.price}`);
-
-    // Check the price threshold before attempting to buy
-    if (nft.price <= 5000000000) {
+    // Process each listing concurrently
+    const transactions = validListings.map(async (nft) => {
       try {
-        // console.log(`Fetching buy transaction for NFT ID: ${nft.id}...`);      
-        // Fetch the buy transaction from Tradeport SDK
         const transaction = await suiTradingClient.buyListings({
           listingIds: [nft.id],
           walletAddress: address,
-          
         });
-        // console.log(`Signing and executing transaction for NFT ID: ${nft.id}...`);
-        // Sign and execute the transaction
         const result = await client.signAndExecuteTransaction({
-          transaction: transaction,
+          transaction,
           signer: keypair,
-          requestType: 'WaitForLocalExecution',
+          requestType: "WaitForLocalExecution",
           options: {
             showEffects: true,
+            gasBudget: 5000000,
           },
         });
         console.log(`🎉 Transaction Successful for NFT ID: ${nft.id}`);
       } catch (error) {
         console.error(
-          `❌ Transaction Failed for NFT ID: ${nft.id}:`,
-          error.message
+          `❌ Transaction Failed for NFT ID: ${nft.id}. Error: ${error.message}`
         );
       }
-    }
+    });
+
+    await Promise.all(transactions);
+  } catch (error) {
+    console.error("Error fetching listings: ", error.message);
   }
 }
 
